@@ -58,9 +58,11 @@ class OssecSocketJSON(OssecSocket):
 
     def send(self, msg, header_format="<I"):
         return OssecSocket.send(self, msg_bytes=dumps(msg).encode(), header_format=header_format)
+        # return OssecSocket.send(self, msg_bytes=msg.encode(), header_format=header_format)
 
     def receive(self, header_format="<I", header_size=4):
         response = loads(OssecSocket.receive(self, header_format=header_format, header_size=header_size).decode())
+        # response = OssecSocket.receive(self, header_format=header_format, header_size=header_size).decode()
 
         return response
 
@@ -223,7 +225,9 @@ class WazuhSocketJSON(WazuhAsyncSocket):
 
 
 daemons = {
-    "authd": {"protocol": "TCP", "path": common.AUTHD_SOCKET, "header_format": "<I", "size": 4}}
+    "authd": {"protocol": "TCP", "path": common.AUTHD_SOCKET, "header_format": "<I", "size": 4},
+    "wazuh-db": {"protocol": "TCP", "path": common.wdb_socket_path, "header_format": "<I", "size": 4}
+}
 
 
 async def wazuh_sendasync(daemon_name, message=None):

@@ -22,6 +22,8 @@ from wazuh.core.cluster.dapi import dapi
 from wazuh.core.wdb import WazuhDBConnection
 from wazuh.core.utils import safe_move
 
+from wazuh.core.cluster import  local_client
+import functools
 
 class ReceiveIntegrityTask(c_common.ReceiveFileTask):
     """
@@ -253,10 +255,19 @@ class WorkerHandler(client.AbstractClient, c_common.WazuhCommon):
             try:
                 if self.connected:
                     before = time.time()
-                    agent_info_logger.info("Starting to send agent status files")
-                    worker_files = wazuh.core.cluster.cluster.get_files_status('worker', self.name, get_md5=False)
-                    await SyncWorker(cmd=b'sync_a_w_m', files_to_sync=worker_files, checksums=worker_files,
-                                     logger=agent_info_logger, worker=self).sync()
+                    agent_info_logger.info("Starting to send agent info")
+                    # worker_files = wazuh.core.cluster.cluster.get_files_status('worker', self.name, get_md5=False)
+                    # await SyncWorker(cmd=b'sync_a_w_m', files_to_sync=worker_files, checksums=worker_files,
+                    #                  logger=agent_info_logger, worker=self).new_sync()
+
+                    mitre_msg = "mitre sql select phase_name as 'phase_name',platform_name as 'platform_name',id as 'id',json as 'json' from attack left join has_phase on attack.id = has_phase.attack_id left join has_platform on attack.id = has_platform.attack_id where id in (select distinct(id) from attack left join has_phase on attack.id = has_phase.attack_id left join has_platform on attack.id = has_platform.attack_id order by id asc limit 10) limit 20 offset 0"
+                    data = {'daemon_name': 'wazuh-db',
+                            'message': mitre_msg
+                            }
+                    lc = local_client.LocalClient()
+                    result = await lc.execute(command=b'sendsync', data=json.dumps(data).encode(),
+                                              wait_for_complete=False)
+
                     after = time.time()
                     agent_info_logger.debug2("Time synchronizing agent statuses: {} s".format(after - before))
             except exception.WazuhException as e:

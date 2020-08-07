@@ -368,6 +368,9 @@ class Handler(asyncio.Protocol):
         client, string_id = data.split(b' ', 1)
         client = client.decode()
         try:
+            # res = await self.get_manager().local_server.clients[client].send_string(self.in_str[string_id].payload)
+            # res = await self.get_manager().local_server.clients[client].send_request(b'sendsync_res', res)
+
             await self.get_manager().local_server.clients[client].send_request(b'ok', self.in_str[string_id].payload)
         except exception.WazuhException as e:
             self.logger.error(f"Error sending send sync response to local client: {e}")
